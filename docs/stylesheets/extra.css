@@ -1,0 +1,170 @@
+/* ── Strava brand colours ──────────────────────────────────── */
+:root {
+  --strava-orange:       #FC4C02;
+  --strava-orange-light: #FF7040;
+  --strava-orange-dark:  #D93E00;
+  --strava-dark:         #242428;
+  --strava-gray:         #F5F5F5;
+
+  --md-primary-fg-color:        var(--strava-orange);
+  --md-primary-fg-color--light: var(--strava-orange-light);
+  --md-primary-fg-color--dark:  var(--strava-orange-dark);
+  --md-primary-bg-color:        #ffffff;
+  --md-accent-fg-color:         var(--strava-orange);
+}
+
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color:        var(--strava-orange);
+  --md-primary-fg-color--light: var(--strava-orange-light);
+  --md-primary-fg-color--dark:  var(--strava-orange-dark);
+  --md-accent-fg-color:         var(--strava-orange-light);
+  --md-default-bg-color:        #1a1a1e;
+  --md-default-fg-color:        #e8e8e8;
+}
+
+/* ── Header ────────────────────────────────────────────────── */
+.md-header {
+  background-color: var(--strava-orange) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,.25);
+}
+
+.md-header__title {
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+/* ── Navigation tabs ───────────────────────────────────────── */
+.md-tabs {
+  background-color: var(--strava-orange-dark) !important;
+}
+
+.md-tabs__link--active,
+.md-tabs__link:hover {
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+
+/* ── Hero banner on home page ──────────────────────────────── */
+.hero {
+  padding: 4rem 2rem;
+  text-align: center;
+  background: linear-gradient(135deg, var(--strava-orange) 0%, var(--strava-orange-dark) 100%);
+  color: #ffffff;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+}
+
+.hero h1 {
+  font-size: 2.6rem;
+  font-weight: 800;
+  margin: 0 0 0.75rem;
+  color: #ffffff !important;
+  border: none !important;
+}
+
+.hero p {
+  font-size: 1.15rem;
+  opacity: 0.92;
+  max-width: 620px;
+  margin: 0 auto 2rem;
+}
+
+.hero .badge-row {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.hero-badge {
+  display: inline-block;
+  background: rgba(255,255,255,.18);
+  border: 1.5px solid rgba(255,255,255,.45);
+  color: #ffffff;
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  backdrop-filter: blur(4px);
+}
+
+/* ── Feature grid ──────────────────────────────────────────── */
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 1.25rem;
+  margin: 2rem 0;
+}
+
+.feature-card {
+  background: var(--md-default-bg-color);
+  border: 1.5px solid rgba(252,76,2,.2);
+  border-radius: 10px;
+  padding: 1.4rem 1.5rem;
+  transition: border-color .2s, box-shadow .2s;
+}
+
+.feature-card:hover {
+  border-color: var(--strava-orange);
+  box-shadow: 0 4px 16px rgba(252,76,2,.12);
+}
+
+.feature-card .icon {
+  font-size: 2rem;
+  margin-bottom: 0.6rem;
+  display: block;
+}
+
+.feature-card h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0 0 0.4rem;
+  color: var(--strava-orange);
+}
+
+.feature-card p {
+  font-size: 0.875rem;
+  margin: 0;
+  opacity: 0.85;
+}
+
+/* ── Admonition overrides ──────────────────────────────────── */
+.md-typeset .admonition.tip,
+.md-typeset details.tip {
+  border-color: var(--strava-orange);
+}
+
+.md-typeset .tip > .admonition-title,
+.md-typeset .tip > summary {
+  background-color: rgba(252,76,2,.1);
+}
+
+.md-typeset .tip > .admonition-title::before,
+.md-typeset .tip > summary::before {
+  background-color: var(--strava-orange);
+}
+
+/* ── Inline code ───────────────────────────────────────────── */
+.md-typeset code {
+  background-color: rgba(252,76,2,.08);
+  color: var(--strava-orange-dark);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+}
+
+[data-md-color-scheme="slate"] .md-typeset code {
+  background-color: rgba(252,76,2,.15);
+  color: var(--strava-orange-light);
+}
+
+/* ── Tables ────────────────────────────────────────────────── */
+.md-typeset table:not([class]) th {
+  background-color: var(--strava-orange);
+  color: #ffffff;
+}
+
+/* ── Scrollbar ─────────────────────────────────────────────── */
+::-webkit-scrollbar-thumb {
+  background-color: rgba(252,76,2,.4);
+  border-radius: 4px;
+}

@@ -1,0 +1,93 @@
+site_name: Obsidian Strava Sync
+site_description: Sync your Strava activities into Obsidian as Markdown notes with interactive route maps.
+site_author: philipppollmann
+site_url: https://philipppollmann.github.io/obsidian-strava-sync/
+repo_url: https://github.com/philipppollmann/obsidian-strava-sync
+repo_name: philipppollmann/obsidian-strava-sync
+
+theme:
+  name: material
+  custom_dir: docs/overrides
+  logo: assets/strava-logo.svg
+  favicon: assets/strava-logo.svg
+  font:
+    text: Inter
+    code: JetBrains Mono
+  palette:
+    - scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - navigation.footer
+    - search.highlight
+    - search.suggest
+    - content.code.copy
+    - content.code.annotate
+    - toc.follow
+
+extra_css:
+  - stylesheets/extra.css
+
+nav:
+  - Home: index.md
+  - User Guide:
+    - Getting Started: user/getting-started.md
+    - Authentication: user/authentication.md
+    - Configuration: user/configuration.md
+    - Syncing: user/syncing.md
+    - Template Reference: user/template-reference.md
+  - Developer Guide:
+    - Architecture: dev/architecture.md
+    - OAuth Flow: dev/oauth.md
+    - Sync Engine: dev/sync-engine.md
+    - Map Rendering: dev/map-rendering.md
+    - Rate Limiting: dev/rate-limiting.md
+    - Building & Contributing: dev/contributing.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+
+plugins:
+  - search
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/philipppollmann/obsidian-strava-sync
+    - icon: fontawesome/brands/strava
+      link: https://www.strava.com
