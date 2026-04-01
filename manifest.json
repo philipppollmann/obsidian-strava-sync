@@ -1,0 +1,10 @@
+{
+  "id": "obsidian-strava-sync",
+  "name": "Strava Sync",
+  "version": "1.0.0",
+  "minAppVersion": "0.15.0",
+  "description": "Sync Strava activities to Obsidian as Markdown notes with route maps.",
+  "author": "philipppollmann",
+  "authorUrl": "https://github.com/philipppollmann",
+  "isDesktopOnly": true
+}
