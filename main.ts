@@ -1,6 +1,5 @@
 import {
 	App,
-	Modal,
 	Notice,
 	Plugin,
 	PluginSettingTab,
@@ -165,6 +164,12 @@ export default class StravaSyncPlugin extends Plugin {
 		});
 
 		this.addSettingTab(new StravaSyncSettingTab(this.app, this));
+
+		// Render strava-map code blocks as interactive Leaflet maps
+		this.registerMarkdownCodeBlockProcessor(
+			"strava-map",
+			(source, el) => this.renderLeafletMap(source.trim(), el)
+		);
 	}
 
 	async onunload() {
@@ -523,10 +528,10 @@ export default class StravaSyncPlugin extends Plugin {
 
 		const filePath = normalizePath(`${folderPath}/${rawFilename}.md`);
 
-		// Generate inline SVG route map
+		// Generate strava-map code block (rendered as interactive Leaflet map by this plugin)
 		const polyline =
 			activity.map?.polyline || activity.map?.summary_polyline || "";
-		const mapSvg = polyline ? this.generateSVGMap(polyline) : "";
+		const mapBlock = polyline ? `\`\`\`strava-map\n${polyline}\n\`\`\`` : "";
 
 		const icon = this.getSportIcon(activity.sport_type || activity.type);
 
@@ -549,7 +554,7 @@ export default class StravaSyncPlugin extends Plugin {
 			max_heart_rate:
 				activity.max_heartrate != null ? String(activity.max_heartrate) : "—",
 			calories: activity.calories != null ? activity.calories.toFixed(0) : "—",
-			map: mapSvg,
+			map: mapBlock,
 		};
 
 		// YAML frontmatter
@@ -612,7 +617,7 @@ export default class StravaSyncPlugin extends Plugin {
 	}
 
 	// ============================================================
-	// POLYLINE DECODE + SVG MAP
+	// POLYLINE DECODE
 	// ============================================================
 
 	private decodePolyline(encoded: string): [number, number][] {
@@ -644,61 +649,111 @@ export default class StravaSyncPlugin extends Plugin {
 		return points;
 	}
 
-	private generateSVGMap(encoded: string): string {
-		const raw = this.decodePolyline(encoded);
-		if (raw.length === 0) return "";
+	// ============================================================
+	// LEAFLET MAP RENDERER
+	// ============================================================
 
-		// Downsample to max 500 points to keep file size reasonable
-		const step = Math.max(1, Math.ceil(raw.length / 500));
-		const pts = raw.filter((_, i) => i % step === 0 || i === raw.length - 1);
+	/**
+	 * Lazily loads Leaflet (JS + CSS) from unpkg CDN.
+	 * Called only when a strava-map code block is first rendered.
+	 */
+	private async ensureLeafletLoaded(): Promise<void> {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		if ((window as any).L) return;
 
-		const W = 600, H = 300, P = 20;
-
-		let minLat = Infinity, maxLat = -Infinity;
-		let minLng = Infinity, maxLng = -Infinity;
-		for (const [la, lo] of pts) {
-			if (la < minLat) minLat = la;
-			if (la > maxLat) maxLat = la;
-			if (lo < minLng) minLng = lo;
-			if (lo > maxLng) maxLng = lo;
+		if (!document.getElementById("strava-leaflet-css")) {
+			const link = document.createElement("link");
+			link.id = "strava-leaflet-css";
+			link.rel = "stylesheet";
+			link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+			document.head.appendChild(link);
 		}
 
-		// Cosine correction so the map isn't stretched
-		const cosLat = Math.cos(((minLat + maxLat) / 2) * (Math.PI / 180));
-		const latRange = maxLat - minLat || 0.001;
-		const lngRange = (maxLng - minLng || 0.001) * cosLat;
+		await new Promise<void>((resolve, reject) => {
+			const script = document.createElement("script");
+			script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+			script.onload = () => resolve();
+			script.onerror = () => reject(new Error("Failed to load Leaflet from CDN"));
+			document.head.appendChild(script);
+		});
+	}
 
-		const availW = W - 2 * P;
-		const availH = H - 2 * P;
-		const scale = Math.min(availW / lngRange, availH / latRange);
+	/**
+	 * Renders an interactive OpenStreetMap + Leaflet map for a given encoded polyline.
+	 * Called by the "strava-map" markdown code block processor.
+	 */
+	private async renderLeafletMap(polyline: string, container: HTMLElement) {
+		if (!polyline) {
+			container.createEl("p", { text: "No GPS route data available." });
+			return;
+		}
 
-		const projW = lngRange * scale;
-		const projH = latRange * scale;
-		const ox = P + (availW - projW) / 2;
-		const oy = P + (availH - projH) / 2;
+		const mapEl = container.createDiv({
+			attr: {
+				style: [
+					"height: 400px",
+					"border-radius: 10px",
+					"overflow: hidden",
+					"margin: 0.5em 0",
+					"z-index: 0",       // prevent leaflet controls overlapping Obsidian UI
+				].join(";"),
+			},
+		});
 
-		const toX = (lo: number) => ox + (lo - minLng) * cosLat * scale;
-		const toY = (la: number) => oy + (maxLat - la) * scale;
+		try {
+			await this.ensureLeafletLoaded();
+		} catch (e) {
+			mapEl.setText("Could not load map: " + e.message);
+			return;
+		}
 
-		const d = pts
-			.map(([la, lo], i) => `${i === 0 ? "M" : "L"}${toX(lo).toFixed(1)},${toY(la).toFixed(1)}`)
-			.join(" ");
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const L = (window as any).L;
 
-		const sx = toX(pts[0][1]).toFixed(1);
-		const sy = toY(pts[0][0]).toFixed(1);
-		const ex = toX(pts[pts.length - 1][1]).toFixed(1);
-		const ey = toY(pts[pts.length - 1][0]).toFixed(1);
+		const map = L.map(mapEl, { zoomControl: true });
 
-		return (
-			`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" ` +
-			`style="width:100%;max-width:${W}px;border-radius:10px;display:block;margin:1em 0">` +
-			`<rect width="${W}" height="${H}" rx="10" fill="#dde8f0"/>` +
-			`<path d="${d}" fill="none" stroke="#fc4c02" stroke-width="2.5" ` +
-			`stroke-linecap="round" stroke-linejoin="round"/>` +
-			`<circle cx="${sx}" cy="${sy}" r="5" fill="#22c55e" stroke="white" stroke-width="1.5"/>` +
-			`<circle cx="${ex}" cy="${ey}" r="5" fill="#fc4c02" stroke="white" stroke-width="1.5"/>` +
-			`</svg>`
-		);
+		L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+			attribution:
+				'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+			maxZoom: 19,
+		}).addTo(map);
+
+		const latLngs = this.decodePolyline(polyline) as [number, number][];
+		if (latLngs.length === 0) {
+			mapEl.setText("No GPS coordinates found.");
+			return;
+		}
+
+		// Route line in Strava orange
+		const poly = L.polyline(latLngs, {
+			color: "#fc4c02",
+			weight: 4,
+			opacity: 0.9,
+			lineJoin: "round",
+		}).addTo(map);
+
+		// Green start dot
+		L.circleMarker(latLngs[0], {
+			radius: 7,
+			fillColor: "#22c55e",
+			fillOpacity: 1,
+			color: "white",
+			weight: 2,
+		}).addTo(map);
+
+		// Orange end dot
+		L.circleMarker(latLngs[latLngs.length - 1], {
+			radius: 7,
+			fillColor: "#fc4c02",
+			fillOpacity: 1,
+			color: "white",
+			weight: 2,
+		}).addTo(map);
+
+		map.fitBounds(poly.getBounds(), { padding: [24, 24] });
+
+		// Leaflet needs a size invalidation after the DOM settles
+		setTimeout(() => map.invalidateSize(), 150);
 	}
 
 	// ============================================================
